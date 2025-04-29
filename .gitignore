@@ -1,3 +1,25 @@
+# local env files
+.env
+.env.*
+
+# raspberry pi
+.DS_Store
+
+# IDE specific files
+.idea
+.idea/
+*.iws
+*.iml
+*.ipr
+!/.idea/runConfigurations
+.vscode/
+
+# caches
 __pycache__/
 .ipynb_checkpoints/
-*.pyc
+*.py[cod]
+.temp/
+.spotifycache
+
+# Logs
+*.log
