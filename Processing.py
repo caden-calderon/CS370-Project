@@ -1,3 +1,5 @@
+# Author: Caden Calderon 
+
 import math
 import numpy as np
 

@@ -1,3 +1,5 @@
+# Author: Caden Calderon 
+
 import numpy as np
 
 seq = np.load("collected_data/assign_name/sequence_6.npy")  # <<< Adjust path here as needed 

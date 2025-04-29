@@ -1,3 +1,4 @@
+# Author: Caden Calderon 
 # Run in Jupyter notebooks terminal 
 
 import numpy as np
