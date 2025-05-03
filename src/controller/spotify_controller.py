@@ -1,4 +1,5 @@
 # spotify_controller.py
+# Author: Andrew Aberer 
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth

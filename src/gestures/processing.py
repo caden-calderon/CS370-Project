@@ -1,4 +1,5 @@
-# Author: Caden Calderon 
+# processing.py
+# Author: Caden Calderon
 
 import math
 import numpy as np
@@ -6,29 +7,36 @@ import numpy as np
 
 def center_landmarks(frame):
     frame = np.array(frame)
-    # Get wrist coordinates 
+    # Get wrist coordinates
     wrist_x = frame[0]
     wrist_y = frame[1]
     wrist_z = frame[2]
     centered = frame.copy()
-    for i in range(21):  # Loop through the 21 landmarks 
-        # Center relative to wrist 
-        centered[i*3 + 0] -= wrist_x  
+    for i in range(21):  # Loop through the 21 landmarks
+        # Center relative to wrist
+        centered[i*3 + 0] -= wrist_x
         centered[i*3 + 1] -= wrist_y
         centered[i*3 + 2] -= wrist_z
     return centered
 
 
-def normalize_hand_size(frame, ref_start=0, ref_end=9):  # Wrist and middle finger MCP joint 
+# Wrist and middle finger MCP joint
+def normalize_hand_size(frame, ref_start=0, ref_end=9):
     frame = np.array(frame)
-    x0, y0, z0 = frame[ref_start*3], frame[ref_start*3+1], frame[ref_start*3+2]  # Get start coordinates 
-    x1, y1, z1 = frame[ref_end*3], frame[ref_end*3+1], frame[ref_end*3+2]  # Get end coordinates 
-    hand_scale = math.sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)  # Euclidean distance between wrist and middle MCP
+    x0, y0, z0 = frame[ref_start*3], frame[ref_start*3 +
+                                           # Get start coordinates
+                                           1], frame[ref_start*3+2]
+    x1, y1, z1 = frame[ref_end*3], frame[ref_end*3 +
+                                         # Get end coordinates
+                                         1], frame[ref_end*3+2]
+    # Euclidean distance between wrist and middle MCP
+    hand_scale = math.sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)
     if hand_scale == 0:  # If wrist and middle MCP are in same place (bad)
         hand_scale = 1e-6
     scaled = frame.copy()
-    scaled /= hand_scale  # Scale relative to hand scale 
+    scaled /= hand_scale  # Scale relative to hand scale
     return scaled
+
 
 def normalize_wrist_angle(frame_vector, ref_start=0, ref_end=5):
     # 1) reshape to (21, 3) so we can index x,y easily
@@ -36,8 +44,8 @@ def normalize_wrist_angle(frame_vector, ref_start=0, ref_end=5):
 
     # 2) get the 2D vector from landmark ref_start to ref_end
     p0 = pts[ref_start, :2]  # [x0, y0]
-    p5 = pts[ref_end,   :2]  # [x5, y5]
-    V  = p5 - p0            # vector in the XY plane
+    p5 = pts[ref_end, :2]  # [x5, y5]
+    V = p5 - p0            # vector in the XY plane
 
     # 3) signed angle between V and positive Y axis:
     #    angle = atan2(Vx, Vy)
@@ -59,7 +67,7 @@ def normalize_wrist_angle(frame_vector, ref_start=0, ref_end=5):
 
 def lock_movement(frame, lock_x=False, lock_y=False, lock_z=False):
     frame = np.array(frame)
-    for i in range(21):  # Loop through the 21 landmarks 
+    for i in range(21):  # Loop through the 21 landmarks
         if lock_x:
             frame[i*3 + 0] = 0.0
         if lock_y:
@@ -68,12 +76,14 @@ def lock_movement(frame, lock_x=False, lock_y=False, lock_z=False):
             frame[i*3 + 2] = 0.0
     return frame
 
+
 def extract_motion_deltas(sequence):
     sequence = np.array(sequence)  # safety check
 
     deltas = np.diff(sequence, axis=0)  # compute frame-to-frame differences
 
     return deltas
+
 
 def preprocess_frame(frame,
                      center=True,
@@ -82,20 +92,20 @@ def preprocess_frame(frame,
                      lock_axes=(False, False, False)):
     # 1) Copy
     pts = np.array(frame, dtype=float)
-    
+
     # 2) Center (e.g. subtract your chosen origin)
     if center:
         pts = center_landmarks(pts)
-    
+
     # 3) Rotate so forearm is vertical
     if rotate:
         pts = normalize_wrist_angle(pts)
-    
+
     # 4) Uniformly scale to canonical hand size
     if scale:
         pts = normalize_hand_size(pts)
-    
+
     # 5) Finally, zero out any axes you want locked
     pts = lock_movement(pts, *lock_axes)
-    
+
     return pts

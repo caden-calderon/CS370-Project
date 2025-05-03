@@ -3,6 +3,18 @@
 
 A Raspberry Pi-powered system that uses computer vision and machine learning to control Spotify and LIFX smart lights through hand gestures.
 
+## Requirements
+# Spotify
+Setup an application via [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+Set application credentials in your `.env`
+# LIFX
+Generate a personal access token [here](https://cloud.lifx.com/settings)
+Add token to `.env`
+
+# API Documentation
+[Spotify Web API Docs](https://developer.spotify.com/documentation/web-api)
+[Lifx API Docs](https://api.developer.lifx.com/reference/introduction)
+
 ## Quick Start
 
 1. Install dependencies:
@@ -28,7 +40,7 @@ A Raspberry Pi-powered system that uses computer vision and machine learning to 
 - Swipe left → Previous track
 - Swipe up → Volume up
 - Swipe down → Volume down
-- More here?
+- TODO: Define hand gesture number 1-4 mappings
 
 ### LIFX Controls
 
@@ -36,7 +48,7 @@ A Raspberry Pi-powered system that uses computer vision and machine learning to 
 - Closed fist (hold) → Lights off
 - Swipe up (hold) → Brightness up
 - Swipe down (hold) → Brightness down
-- More here?
+- TODO: Define hand gesture number 1-4 mappings
 
 ## Project Structure
 
