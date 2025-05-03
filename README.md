@@ -5,14 +5,14 @@ A Raspberry Pi-powered system that uses computer vision and machine learning to 
 
 ## Requirements
 ### Spotify
-Setup an application via [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+Setup an application via [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) <br>  
 Set application credentials in your `.env`
 ### LIFX
-Generate a personal access token [here](https://cloud.lifx.com/settings)
+Generate a personal access token [here](https://cloud.lifx.com/settings) <br>  
 Add token to `.env`
 
 # API Documentation
-[Spotify Web API Docs](https://developer.spotify.com/documentation/web-api)
+[Spotify Web API Docs](https://developer.spotify.com/documentation/web-api) <br>  
 [Lifx API Docs](https://api.developer.lifx.com/reference/introduction)
 
 ## Quick Start
@@ -30,7 +30,7 @@ Add token to `.env`
    python main.py
    ```
 
-## Supported Gestures - (TODO FINALIZE MAPPINGS)
+## Supported Gestures
 
 ### Spotify Controls
 
