@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 # Load a saved gesture sequence
-sequence = np.load('collected_data/closed_to_open/sequence_1.npy')  # <<< Adjust path here as needed 
+sequence = np.load('collected_data/open_to_close/sequence_58.npy')  # <<< Adjust path here as needed 
 print(f"Sequence shape: {sequence.shape}")  # Should be (Sequence length, 63)
 
 # MediaPipe landmark connections (for drawing bones)
