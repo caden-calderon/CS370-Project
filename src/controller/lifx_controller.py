@@ -1,4 +1,5 @@
 # lifx_controller.py
+# Author: Andrew Aberer 
 
 import requests
 import os

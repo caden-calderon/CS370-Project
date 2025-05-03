@@ -1,4 +1,5 @@
 # dependencies.py
+# Author: Andrew Aberer
 
 import subprocess
 import sys

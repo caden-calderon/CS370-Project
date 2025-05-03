@@ -1,6 +1,10 @@
+# main.py
+# Author: Andrew Aberer & Caden Calderon
+
+
 import logging
-from spotify_controller import SpotifyController
-from lifx_controller import LifxController
+from src.controller.spotify_controller import SpotifyController
+from src.controller.lifx_controller import LifxController
 import time
 
 logging.basicConfig(level=logging.INFO,
@@ -11,7 +15,7 @@ logger = logging.getLogger(__name__)
 spotify = SpotifyController()
 lifx = LifxController()
 
-# TODO - finalize mapping
+# TODO - finalize mapping (Define hand gesture number 1-4 mappings)
 gesture_mappings = {
     # Spotify Controls  ----------------------------------------
     0: {"controller": "spotify", "command": "play"},
@@ -51,7 +55,7 @@ gesture_labels = [
     "thumbs_up",    # like
     "thumbs_down",  # dislike
     "peace_sign",   # switch playlist
-    
+
     # LIFX Controls (11-20) ------------------------------------
     "open_palm_hold",      # lights on
     "closed_fist_hold",    # lights off
@@ -66,6 +70,8 @@ gesture_labels = [
 ]
 
 # execute a command on the specified controller
+
+
 def execute_controller_command(controller_name, command):
     if controller_name == "spotify":
         return spotify.execute_command(command)
@@ -75,6 +81,7 @@ def execute_controller_command(controller_name, command):
         logger.warning(f"Unknown controller: {controller_name}")
         return False
 
+
 # TODO - load model
 try:
     # model = tf.keras.models.load_model('path/to/your/gesture_recognition_model.h5')
@@ -83,9 +90,11 @@ except Exception as e:
     logger.error(f"Failed to load model: {str(e)}")
     exit(1)
 
+
 def main():
-    # Wasnt needed 
-    return 
+    # Wasnt needed
+    return
+
 
 if __name__ == "__main__":
     try:
