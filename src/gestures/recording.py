@@ -5,7 +5,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import os
-import Processing
+import processing
 import time
 import math
 import inspect
@@ -16,7 +16,7 @@ last_good = None
 
 class Config:
     SEQUENCE_LENGTH = 20
-    CAMERA_PORT = 4  # Default webcam port
+    CAMERA_PORT = 0  # Default webcam port
     DATA_DIR = "collected_data"
     GESTURE = "open_to_close"  # <<< Adjust as needed
 
@@ -59,7 +59,7 @@ def process_landmarks(frame, results, is_recording, buffer, mp_drawing, mp_hands
         coords = [c for lm in hl.landmark for c in (lm.x, lm.y, lm.z)]
 
         # preprocess + record
-        proc = Processing.preprocess_frame(
+        proc = processing.preprocess_frame(
             coords,
             center=True,
             rotate=False,
@@ -96,7 +96,7 @@ def main():
     print("Format:", cap.get(cv2.CAP_PROP_FOURCC))
     print("FPS:   ", cap.get(cv2.CAP_PROP_FPS))
 
-    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)           # optional: lower latency
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)           # optional: lower latency
 
     mp_hands_mod = mp.solutions.hands              # MediaPipe setup
     mp_drawing = mp.solutions.drawing_utils
