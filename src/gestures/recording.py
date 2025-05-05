@@ -18,7 +18,7 @@ class Config:
     SEQUENCE_LENGTH = 20
     CAMERA_PORT = 4  # Default webcam port
     DATA_DIR = "collected_data"
-    GESTURE = "four"  # <<< Adjust as needed
+    GESTURE = "swipe_up_test"  # <<< Adjust as needed
 
 
 def get_next_recording_id(cfg):
