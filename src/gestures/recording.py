@@ -16,9 +16,9 @@ last_good = None
 
 class Config:
     SEQUENCE_LENGTH = 20
-    CAMERA_PORT = 0  # Default webcam port
+    CAMERA_PORT = 4  # Default webcam port
     DATA_DIR = "collected_data"
-    GESTURE = "open_to_close"  # <<< Adjust as needed
+    GESTURE = "four"  # <<< Adjust as needed
 
 
 def get_next_recording_id(cfg):
@@ -96,7 +96,7 @@ def main():
     print("Format:", cap.get(cv2.CAP_PROP_FOURCC))
     print("FPS:   ", cap.get(cv2.CAP_PROP_FPS))
 
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)           # optional: lower latency
+    #cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)           # optional: lower latency
 
     mp_hands_mod = mp.solutions.hands              # MediaPipe setup
     mp_drawing = mp.solutions.drawing_utils

@@ -16,7 +16,7 @@ class LifxController:
     # init LIFX controller with API token.
     def __init__(self):
         try:
-            # API token - set these env vars in your zshrc/basrc or similar
+            # API token - set these env vars in your zshrc/bashrc or similar
             self.api_token = os.environ.get('LIFX_API_TOKEN')
 
             if not self.api_token:
