@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-# your hand‐connection list
 HAND_CONNECTIONS = [(0,1), (1,2), (2,3), (3,4),
                     (0,5), (5,6), (6,7), (7,8),
                     (0,9), (9,10), (10,11), (11,12),
@@ -11,11 +10,10 @@ HAND_CONNECTIONS = [(0,1), (1,2), (2,3), (3,4),
                     (0,17),(17,18),(18,19),(19,20)]
 
 def show_all_sequences(rel_folder="collected_data/three"):
-    # build the data folder path as before...
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_folder = os.path.normpath(os.path.join(script_dir, "..", "..", rel_folder))
 
-    # grab & numerically sort your .npy files
+    # grab & numerically sort .npy files
     files = sorted(
         glob.glob(os.path.join(data_folder, "sequence_*.npy")),
         key=lambda fn: int(re.search(r"sequence_(\d+)\.npy", fn).group(1))
@@ -52,7 +50,7 @@ def show_all_sequences(rel_folder="collected_data/three"):
 
         plt.title(os.path.basename(fpath))
 
-        # show *non*-blocking, pause for the duration of the animation + a buffer
+        # show non-blocking, pause for the duration of the animation + a buffer
         plt.show(block=False)
         total_time = len(sequence) * (100/1000) + 0.5  # 100 ms per frame + 0.5 s
         plt.pause(total_time)
