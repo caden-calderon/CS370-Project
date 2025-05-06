@@ -1,3 +1,5 @@
+# Author: Caden Calderon 
+
 import os, glob, time, re
 import numpy as np
 import matplotlib.pyplot as plt

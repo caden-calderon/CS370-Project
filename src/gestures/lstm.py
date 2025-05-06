@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from glob import glob
 from tensorflow.keras import Sequential
+from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import Normalization, LSTM, Dropout, Dense
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
@@ -14,6 +15,7 @@ label_map = {name: idx for idx, name in enumerate(gesture_list)}
 
 X = {p: [] for p in gesture_partition}
 y = {p: [] for p in gesture_partition}
+
 
 def load_data():
     for gesture in gesture_list:
@@ -41,6 +43,7 @@ def load_data():
     X_validate, y_validate = X["validate"], y["validate"]
     
     return X_train, y_train, X_test, y_test, X_validate, y_validate
+
 
 def train_lstm(X_train, y_train, X_test, y_test, X_validate, y_validate):
     normalizer = Normalization(axis=-1, input_shape=(20,63))
@@ -97,9 +100,7 @@ def train_lstm(X_train, y_train, X_test, y_test, X_validate, y_validate):
     # Evaluate on test set
     test_loss, test_acc = model.evaluate(X_test, y_test)
     print(f"Test accuracy: {test_acc:.3%}")
-    model.save('gesture_lstm_with_norm.h5')
-
-
+    
     
 def main():
     X_train, y_train, X_test, y_test, X_validate, y_validate = load_data()

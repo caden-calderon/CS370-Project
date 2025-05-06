@@ -34,7 +34,7 @@ def capture_frame(cap):
     return cv2.flip(frame, 1), None  # Flip frame
 
 
-def process_landmarks(frame, results, is_recording, buffer, mp_drawing, mp_hands):
+def process_and_save_landmarks(frame, results, is_recording, buffer, mp_drawing, mp_hands):
     global last_good  # Keep record of last good frame for smoothing
 
     # 1) No detection → re-use last_good if available
@@ -77,7 +77,7 @@ def process_landmarks(frame, results, is_recording, buffer, mp_drawing, mp_hands
         break  # only process the first right hand
 
     return frame, buffer
-
+    
 
 def save_sequence(buffer, recording_id, cfg):
     arr = np.array(buffer)
@@ -118,7 +118,7 @@ def main():
             rgb_frame = cv2.cvtColor(
                 frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
             results = hands.process(rgb_frame)
-            frame, buffer = process_landmarks(
+            frame, buffer = process_and_save_landmarks(
                 frame, results, is_recording, buffer, mp_drawing, mp_hands_mod)
 
             cv2.imshow("Collect", frame)

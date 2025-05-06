@@ -3,6 +3,7 @@
 
 
 import logging
+from gestures.predict_gestures import run_gesture_recognition
 from src.controller.spotify_controller import SpotifyController
 from src.controller.lifx_controller import LifxController
 import time
@@ -92,7 +93,7 @@ except Exception as e:
 
 
 def main():
-    # Wasnt needed
+    
     return
 
 
