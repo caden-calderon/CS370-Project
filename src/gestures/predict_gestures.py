@@ -17,7 +17,7 @@ last_good = None
 
 class Config:
     SEQUENCE_LENGTH = 20
-    CAMERA_PORT = 0  # Default webcam port
+    CAMERA_PORT = 4  # Default webcam port
     PREDICT_THRESHOLD = 0.7  # How confident the model needs to be in order to say a prediction 
 
 
@@ -138,7 +138,6 @@ def run_gesture_recognition():
             if cv2.waitKey(1) == 27:
                 break
             
-            return last_cls
         
     cap.release()
     cv2.destroyAllWindows()
