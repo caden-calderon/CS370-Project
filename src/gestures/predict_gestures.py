@@ -1,16 +1,15 @@
-from collections import deque
+# Author: Caden Calderon 
+
 import cv2
 import mediapipe as mp
 import numpy as np
-import os
-import processing
 import time
-import math
-import inspect
 import mediapipe as mp
 import tensorflow as tf
-import processing
+from collections import deque
+from . import processing
 from tensorflow.keras.models import load_model
+
 
 gesture_list = ["closed_to_open", "open_to_closed", "swipe_left", "swipe_right", "swipe_up", "swipe_down", "one", "two", "three", "four"]
 last_good = None
@@ -19,6 +18,17 @@ class Config:
     SEQUENCE_LENGTH = 20
     CAMERA_PORT = 4  # Default webcam port
     PREDICT_THRESHOLD = 0.7  # How confident the model needs to be in order to say a prediction 
+
+# A object to store the latest gesture
+class ResultHolder:
+    def __init__(self):
+        self.latest_result = None
+
+    def update(self, result):
+        self.latest_result = result
+
+    def get_latest(self):
+        return self.latest_result
 
 
 def capture_frame(cap):
@@ -74,7 +84,7 @@ def predict(model, sequence, threshold=0.7):
     return None, None
 
 
-def run_gesture_recognition():
+def run_gesture_recognition(q):
     model = load_model('best_gesture_lstm.h5')
     cfg   = Config()
     cap   = cv2.VideoCapture(cfg.CAMERA_PORT, cv2.CAP_V4L2)
@@ -112,13 +122,14 @@ def run_gesture_recognition():
                 mp.solutions.hands
             )
 
-            # only predict once per cooldown interval
+            # Only predict once per cooldown interval
             if len(buffer) == cfg.SEQUENCE_LENGTH and results.multi_hand_landmarks:
                 now = time.time()
                 if now - last_predict_at > PREDICT_COOLDOWN:
                     cls, conf = predict(model, list(buffer), cfg.PREDICT_THRESHOLD)
                     if cls is not None:
                         last_cls, last_conf = cls, conf
+                        q.put(gesture_list[last_cls])  # <-- send result to main
                     buffer.clear()
                     last_predict_at = now
 
@@ -138,10 +149,10 @@ def run_gesture_recognition():
             if cv2.waitKey(1) == 27:
                 break
             
-        
     cap.release()
     cv2.destroyAllWindows()
     
     
 if __name__ == "__main__":
     run_gesture_recognition()
+
