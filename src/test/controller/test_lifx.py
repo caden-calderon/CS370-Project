@@ -19,45 +19,17 @@ sys.path.insert(0, project_root)
 
 try:
     from src.controller.lifx_controller import LifxController
-    print("Successfully imported LifxController")
+    from src.constants.constants import (
+        GESTURE_LIST,
+        LIFX_COMMANDS,
+        GESTURE_TO_INDEX,
+        COMMAND_DESCRIPTIONS,
+        ControllerType
+    )
+    print("Successfully imported LifxController &")
 except ImportError as e:
     print(f"Unexpected ImportError: {e}")
     sys.exit(1)
-
-# LIFX command mapping
-lifx_commands = {
-    0: "lights_on",
-    1: "lights_off",
-    2: "brightness_up",
-    3: "brightness_down",
-    4: "toggle",
-    5: "set_color_warm",
-    6: "set_color_cool",
-    7: "set_color_red",
-    8: "set_color_blue",
-    9: "set_color_green",
-    10: "set_color_purple",
-    11: "pulse"
-}
-
-lifx_gesture_labels = [
-    "open_palm_hold",     # lights on
-    "closed_fist_hold",   # lights off
-    "swipe_up_hold",      # brightness up
-    "swipe_down_hold",    # brightness down
-    "finger_snap",        # toggle lights
-    "one_finger_circle",  # warm white
-    "two_finger_circle",  # cool white
-    "finger_gun",         # red color
-    "ok_sign",            # blue color
-    "wave",               # green color
-    "peace_sign_hold",    # purple color
-    "snap_and_point",     # pulse effect
-]
-
-# Create a reverse mapping from gesture name to index
-gesture_name_to_index = {name: idx for idx,
-                         name in enumerate(lifx_gesture_labels)}
 
 
 def print_available_commands():
@@ -65,9 +37,18 @@ def print_available_commands():
     print("Format: [INDEX] GESTURE_NAME - COMMAND")
     print("-" * 50)
 
-    for idx, label in enumerate(lifx_gesture_labels):
-        command = lifx_commands[idx]
-        print(f"[{idx}] {label} - {command}")
+    for idx, gesture in enumerate(GESTURE_LIST):
+        # inedx 6 and 7 are reserved for controller switching
+        if idx in [6, 7]:
+            print(f"[{idx}] {gesture} - Reserved for controller switching")
+            continue
+
+        if idx in LIFX_COMMANDS:
+            command = LIFX_COMMANDS[idx]
+            description = COMMAND_DESCRIPTIONS.get(command, "")
+            print(f"[{idx}] {gesture} - {command} - {description}")
+        else:
+            print(f"[{idx}] {gesture} - No command assigned")
 
     print("-" * 50)
     print("Enter command index, gesture name, or command name")
@@ -93,26 +74,29 @@ def process_command(lifx, command_input):
         # Check if input is a number (index)
         if command_input.isdigit():
             idx = int(command_input)
-            if idx < 0 or idx >= len(lifx_commands):
-                print(
-                    f"Error: Index {idx} out of range (0-{len(lifx_commands)-1})")
+            if idx not in LIFX_COMMANDS:
+                print(f"Error: Index {idx} is not a valid LIFX command")
                 return
-            command = lifx_commands[idx]
-            gesture = lifx_gesture_labels[idx]
+            command = LIFX_COMMANDS[idx]
+            gesture = GESTURE_LIST[idx]
 
         # Check if input is a gesture name
-        elif command_input in gesture_name_to_index:
-            idx = gesture_name_to_index[command_input]
-            command = lifx_commands[idx]
+        elif command_input in GESTURE_TO_INDEX:
+            idx = GESTURE_TO_INDEX[command_input]
+            if idx not in LIFX_COMMANDS:
+                print(
+                    f"Error: Gesture '{command_input}' is not mapped to a LIFX command")
+                return
+            command = LIFX_COMMANDS[idx]
             gesture = command_input
 
         # Check if input is a direct command name
-        elif command_input in lifx_commands.values():
+        elif command_input in LIFX_COMMANDS.values():
             command = command_input
-            # Find the index of this command
-            idx = next((i for i, cmd in lifx_commands.items()
+            # Find the index of this command (use the first index if multiple exist)
+            idx = next((i for i, cmd in LIFX_COMMANDS.items()
                        if cmd == command), None)
-            gesture = lifx_gesture_labels[idx] if idx is not None else "Unknown"
+            gesture = GESTURE_LIST[idx] if idx is not None else "Unknown"
 
         else:
             print(f"Error: Unknown command '{command_input}'")

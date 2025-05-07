@@ -1,11 +1,15 @@
 # lifx_controller.py
-# Author: Andrew Aberer 
+# Author: Andrew Aberer
 
 import requests
 import os
 import logging
 import time
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from typing import Dict, Any, List, Optional
+from constants.constants import LIFX_COMMANDS
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -43,20 +47,14 @@ class LifxController:
     def execute_command(self, command: str) -> bool:
         logger.info(f"Executing LIFX command: {command}")
 
-        # TODO - finalize mapping
         command_map = {
             "lights_on": self.turn_on,
             "lights_off": self.turn_off,
+            "toggle": self.toggle,
             "brightness_up": self.brightness_up,
             "brightness_down": self.brightness_down,
-            "toggle": self.toggle,
-            "set_color_warm": lambda: self.set_color("warm_white"),
-            "set_color_cool": lambda: self.set_color("cool_white"),
             "set_color_red": lambda: self.set_color("red"),
-            "set_color_blue": lambda: self.set_color("blue"),
-            "set_color_green": lambda: self.set_color("green"),
-            "set_color_purple": lambda: self.set_color("purple"),
-            "pulse": self.pulse_effect
+            "set_color_blue": lambda: self.set_color("blue")
         }
 
         if command in command_map:
@@ -227,19 +225,9 @@ class LifxController:
     #     duration: Transition time in seconds
     def set_color(self, color: str, selector: str = "all", duration: float = 1.0) -> None:
         try:
-            # TODO - finalize mapping
             color_map = {
                 "red": "red",
                 "blue": "blue",
-                "green": "green",
-                "yellow": "yellow",
-                "orange": "orange",
-                "purple": "purple",
-                "pink": "pink",
-                "warm_white": "kelvin:2700",
-                "neutral_white": "kelvin:4000",
-                "cool_white": "kelvin:5500",
-                "daylight": "kelvin:6500"
             }
 
             color_value = color_map.get(color.lower(), color)
@@ -260,71 +248,16 @@ class LifxController:
             logger.error(f"Failed to set color: {str(e)}")
             raise
 
-    # create a pulse effect with the specified color
-    # args:
-    #     color: Color to pulse
-    #     selector: Light selector string
-    #     cycles: Number of pulses
-    def pulse_effect(self, color: str = "red", selector: str = "all", cycles: int = 5) -> None:
-        try:
-            data = {
-                "color": color,
-                "from_color": "current",
-                "period": 0.5,
-                "cycles": cycles,
-                "power_on": True
-            }
-
-            response = requests.post(
-                f"{self.api_url}/{selector}/effects/pulse",
-                headers=self.headers,
-                json=data
-            )
-            response.raise_for_status()
-            logger.info(
-                f"Created pulse effect with color {color} for lights: {selector}")
-        except Exception as e:
-            logger.error(f"Failed to create pulse effect: {str(e)}")
-            raise
-
-    # create a breathe effect with the specified color
-    # args:
-    #     color: Color to breathe
-    #     selector: Light selector string
-    #     cycles: Number of breathe cycles
-    def breathe_effect(self, color: str = "blue", selector: str = "all", cycles: int = 3) -> None:
-        try:
-            data = {
-                "color": color,
-                "from_color": "current",
-                "period": 2.0,
-                "cycles": cycles,
-                "persist": False,
-                "power_on": True
-            }
-
-            response = requests.post(
-                f"{self.api_url}/{selector}/effects/breathe",
-                headers=self.headers,
-                json=data
-            )
-            response.raise_for_status()
-            logger.info(
-                f"Created breathe effect with color {color} for lights: {selector}")
-        except Exception as e:
-            logger.error(f"Failed to create breathe effect: {str(e)}")
-            raise
-
 
 if __name__ == "__main__":
     import sys
 
+    valid_commands = list(set(LIFX_COMMANDS.values()))
+
     if len(sys.argv) != 2:
         print("Usage: python lifx_controller.py <command>")
         print("Available commands:")
-        print("  lights_on, lights_off, toggle, brightness_up, brightness_down")
-        print("  set_color_warm, set_color_cool, set_color_red, set_color_blue")
-        print("  set_color_green, set_color_purple, pulse")
+        print(f"Available commands: {', '.join(valid_commands)}")
         sys.exit(1)
 
     command = sys.argv[1]
