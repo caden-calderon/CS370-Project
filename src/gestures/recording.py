@@ -16,7 +16,7 @@ last_good = None
 
 class Config:
     SEQUENCE_LENGTH = 20
-    CAMERA_PORT = 4  # Default webcam port
+    CAMERA_PORT = 1  # Default webcam port
     DATA_DIR = "collected_data"
     GESTURE = "swipe_down_train"  # <<< Adjust as needed
 

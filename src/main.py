@@ -1,136 +1,240 @@
 # main.py
 # Author: Andrew Aberer & Caden Calderon
 
-import logging
-#from controller.spotify_controller import SpotifyController
-#from controller.lifx_controller import LifxController
-import time
-import multiprocessing
+from constants.constants import (
+    GESTURE_LIST,
+    COMMAND_DESCRIPTIONS,
+    ControllerType
+)
+from controller.controller_manager import ControllerManager
 from gestures.predict_gestures import run_gesture_recognition, ResultHolder
+import logging
+import time
+import sys
+import os
+import multiprocessing
 from queue import Empty
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class MainProgram:
-    def __init__(self, result_holder, queue):
-        self.result_holder = result_holder   # stores the most recent result
-        self.queue = queue  # inter-process result queue
+    def __init__(self, result_holder=None, queue=None):
+        # stores the most recent result
+        self.result_holder = result_holder if result_holder else ResultHolder()
+        self.queue = queue if queue else multiprocessing.Queue()  # inter-process result queue
+        self.gesture_process = None
 
+        self.controller_manager = ControllerManager()
 
-    def process_result(self, result):   # Andrew use this to get results, dont have it return just have it call a function 
+        if not self.controller_manager.has_available_controllers():
+            logger.warning("No controllers are available")
+
+    def process_result(self, result):
         print(f"Received result: {result}")
-        # send_result_to_controller(result)  #sum like this should be fine 
+        if isinstance(result, dict) and 'gesture_index' in result:
+            gesture_index = result['gesture_index']
+            print(
+                f"Detected gesture: {GESTURE_LIST[gesture_index]} (index: {gesture_index})")
 
+            # Let the controller manager handle the gesture
+            success, info = self.controller_manager.handle_gesture(
+                gesture_index)
+
+            if success and info:
+                # Handle different result types
+                if info["type"] == "switch":
+                    print(
+                        f"Switched to {info['controller'].upper()} controller")
+                elif info["type"] == "command":
+                    controller = info["controller"]
+                    command = info["command"]
+                    description = info["description"]
+                    print(f"{controller.capitalize()}: {command} ({description})")
+        else:
+            logger.warning(f"Received invalid result format: {result}")
+
+    def start_gesture_recognition(self):
+        if self.gesture_process is not None and self.gesture_process.is_alive():
+            logger.warning("Gesture recognition process already running")
+            return
+
+        self.gesture_process = multiprocessing.Process(
+            target=run_gesture_recognition,
+            args=(self.queue,),
+            daemon=True
+        )
+        self.gesture_process.start()
+        logger.info("Gesture recognition process started")
+
+    def stop_gesture_recognition(self):
+        if self.gesture_process is None:
+            return
+
+        self.gesture_process.terminate()
+        self.gesture_process.join(timeout=1.0)
+        self.gesture_process = None
+        logger.info("Gesture recognition process stopped")
+
+    def manual_control_menu(self):
+        try:
+            active_controller = self.controller_manager.get_active()
+
+            if not active_controller:
+                print("No active controller")
+                return
+
+            commands = self.controller_manager.get_commands_for_active()
+            command_map = self.controller_manager.command_maps.get(
+                active_controller, {})
+            title = f"{active_controller.upper()} CONTROLLER"
+
+            print(f"\n===== {title} =====")
+            print("Available commands:")
+            for idx, command in commands.items():
+                if idx in [6, 7]:  # Skip controller switching gestures
+                    continue
+                gesture = GESTURE_LIST[idx]
+                # Get description from COMMAND_DESCRIPTIONS instead of executing the command
+                description = COMMAND_DESCRIPTIONS.get(command, "")
+                print(f"[{idx}] {gesture} - {command} - {description}")
+
+            print(
+                "\nEnter command index, 'switch' to change controller, or 'back' to return:")
+
+            choice = input("> ").strip().lower()
+
+            if choice == 'back':
+                return
+            elif choice == 'switch':
+                active_controller = self.controller_manager.get_active()
+                if active_controller == ControllerType.SPOTIFY and self.controller_manager.lifx_available:
+                    self.controller_manager.set_active(ControllerType.LIFX)
+                    print("Switched to LIFX controller")
+                elif active_controller == ControllerType.LIFX and self.controller_manager.spotify_available:
+                    self.controller_manager.set_active(ControllerType.SPOTIFY)
+                    print("Switched to Spotify controller")
+                else:
+                    print("No alternative controller available")
+            elif choice.isdigit():
+                idx = int(choice)
+                success, info = self.controller_manager.handle_gesture(idx)
+                if success and info and info["type"] == "command":
+                    print(f"Executed: {info['command']}")
+                elif not success:
+                    print("Command failed or not available")
+            else:
+                print("Invalid choice")
+        except KeyboardInterrupt:
+            # Let the KeyboardInterrupt bubble up to be caught in the run method
+            print("\nReturning to main menu...")
+            raise
 
     def run(self):
-        try:
-            while True:
-                try:
-                    result = self.queue.get(timeout=0.1)  # wait up to 100 ms between checks helps busy waiting 
-                except Empty:
-                    # no new gesture—go back and wait again
-                    continue
-                
-                # We got a new gesture—update the holder and handle it
-                self.result_holder.update(result)  
-                self.process_result(result)
-        except KeyboardInterrupt:
-            print("Stopping...")
-   
-            
-                
-"""     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
+        print("=" * 50)
+        print("Gesture Control System")
+        print("=" * 50)
 
-    # init controllers
-    spotify = SpotifyController()
-    lifx = LifxController()
+        if not self.controller_manager.has_available_controllers():
+            print("Error: No controllers available. Please check your configuration.")
+            return
 
-    # TODO - finalize mapping (Define hand gesture number 1-4 mappings)
-    gesture_mappings = {
-        # Spotify Controls  ----------------------------------------
-        0: {"controller": "spotify", "command": "play"},
-        1: {"controller": "spotify", "command": "pause"},
-        2: {"controller": "spotify", "command": "next"},
-        3: {"controller": "spotify", "command": "previous"},
-        4: {"controller": "spotify", "command": "volume_up"},
-        5: {"controller": "spotify", "command": "volume_down"},
-        6: {"controller": "spotify", "command": "toggle_shuffle"},
-        7: {"controller": "spotify", "command": "add_favorite"},
-        8: {"controller": "spotify", "command": "like"},
-        9: {"controller": "spotify", "command": "dislike"},
-        10: {"controller": "spotify", "command": "switch_playlist"},
-        # LIFX Light Controls --------------------------------------
-        11: {"controller": "lifx", "command": "lights_on"},
-        12: {"controller": "lifx", "command": "lights_off"},
-        13: {"controller": "lifx", "command": "brightness_up"},
-        14: {"controller": "lifx", "command": "brightness_down"},
-        15: {"controller": "lifx", "command": "toggle"},
-        16: {"controller": "lifx", "command": "set_color_warm"},
-        17: {"controller": "lifx", "command": "set_color_cool"},
-        18: {"controller": "lifx", "command": "set_color_red"},
-        19: {"controller": "lifx", "command": "set_color_blue"},
-        20: {"controller": "lifx", "command": "pulse"}
-    }
+        # Flag to control the main loop
+        running = True
 
-    gesture_labels = [
-        # Spotify Controls (0-10) ----------------------------------
-        "open_palm",    # play
-        "closed_fist",  # pause
-        "swipe_right",  # next track
-        "swipe_left",   # previous track
-        "swipe_up",     # volume up
-        "swipe_down",   # volume down
-        "circular",     # toggle shuffle
-        "two_fingers",  # add to favorites
-        "thumbs_up",    # like
-        "thumbs_down",  # dislike
-        "peace_sign",   # switch playlist
+        while running:
+            try:
+                active_controller = self.controller_manager.get_active()
 
-        # LIFX Controls (11-20) ------------------------------------
-        "open_palm_hold",      # lights on
-        "closed_fist_hold",    # lights off
-        "swipe_up_hold",       # brightness up
-        "swipe_down_hold",     # brightness down
-        "finger_snap",         # toggle lights
-        "one_finger_circle",   # warm white
-        "two_finger_circle",   # cool white
-        "finger_gun",          # red color
-        "ok_sign",             # blue color
-        "wave",                # pulse effect
-    ]
+                print("\nMain Menu:")
+                print("-" * 50)
+                print(
+                    f"Current mode: {active_controller.upper() if active_controller else 'None'}")
+                print("1. Start gesture recognition")
+                print("2. Stop gesture recognition")
+                print("3. Manual control")
+                print("4. Switch controller")
+                print("q. Exit")
+                print("-" * 50)
 
-    # execute a command on the specified controller
+                choice = input("Select an option: ").strip().lower()
 
+                if choice == 'q':
+                    running = False
+                elif choice == '1':
+                    self.start_gesture_recognition()
+                    print("Gesture recognition started")
+                    print("Listening for gestures... (Press Ctrl+C to return to menu)")
 
-    def execute_controller_command(controller_name, command):
-        if controller_name == "spotify":
-            return spotify.execute_command(command)
-        elif controller_name == "lifx":
-            return lifx.execute_command(command)
-        else:
-            logger.warning(f"Unknown controller: {controller_name}")
-            return False
- """
+                    listening = True
+                    while listening:
+                        try:
+                            # Check for new gestures with a small timeout
+                            result = self.queue.get(timeout=0.1)
+                            self.result_holder.update(result)
+                            self.process_result(result)
+                        except Empty:
+                            # No new gesture, continue waiting
+                            continue
+                        except KeyboardInterrupt:
+                            # Set listening to False to exit the inner loop
+                            listening = False
+                            print("\nReturning to menu...")
 
+                elif choice == '2':
+                    self.stop_gesture_recognition()
+                    print("Gesture recognition stopped")
+
+                elif choice == '3':
+                    try:
+                        self.manual_control_menu()
+                    except KeyboardInterrupt:
+                        print("\nReturning to menu...")
+
+                elif choice == '4':
+                    active_controller = self.controller_manager.get_active()
+                    if active_controller == ControllerType.SPOTIFY and self.controller_manager.lifx_available:
+                        self.controller_manager.set_active(ControllerType.LIFX)
+                        print("Switched to LIFX controller")
+                    elif active_controller == ControllerType.LIFX and self.controller_manager.spotify_available:
+                        self.controller_manager.set_active(
+                            ControllerType.SPOTIFY)
+                        print("Switched to Spotify controller")
+                    else:
+                        print("No alternative controller available")
+
+            except KeyboardInterrupt:
+                # Allow KeyboardInterrupt to exit to the main menu instead of exiting the program
+                print("\nReturning to main menu...")
+                continue
+
+        self.stop_gesture_recognition()
+        print("\nExiting program. Goodbye!")
 
 
 if __name__ == "__main__":
-
-    q = multiprocessing.Queue()  #  Create a queue for passing results from the worker 
+    # Create a queue for passing results from the worker
+    queue = multiprocessing.Queue()
     holder = ResultHolder()  # Instantiate a holder to keep track of the latest gesture
-    
+
+    main_program = MainProgram(holder, queue)
+
     # Spawn the worker process that captures & predicts gestures continually
-    p = multiprocessing.Process(
-        target=run_gesture_recognition, 
-        args=(q,), 
+    process = multiprocessing.Process(
+        target=run_gesture_recognition,
+        args=(queue,),
         daemon=True
-    )  
-    p.start()
+    )
+    process.start()
 
     # Start the main loop to consume and handle results
-    main = MainProgram(holder, q)
-    main.run()
-
-    # Cleanup when main loop exits
-    p.terminate()
-    p.join()
+    try:
+        main_program.run()
+    finally:
+        # Cleanup when main loop exits
+        process.terminate()
+        process.join()

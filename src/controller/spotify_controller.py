@@ -1,11 +1,15 @@
 # spotify_controller.py
-# Author: Andrew Aberer 
+# Author: Andrew Aberer
 
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+import sys
 import os
 import time
 import logging
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from spotipy.oauth2 import SpotifyOAuth
+from constants.constants import SPOTIFY_COMMANDS
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -49,7 +53,6 @@ class SpotifyController:
     def execute_command(self, command):
         logger.info(f"Executing Spotify command: {command}")
 
-        # TODO - finalize mapping
         command_map = {
             "play": self.play_music,
             "pause": self.pause_music,
@@ -58,10 +61,7 @@ class SpotifyController:
             "volume_up": self.volume_up,
             "volume_down": self.volume_down,
             "toggle_shuffle": self.toggle_shuffle,
-            "add_favorite": self.add_to_favorites,
-            "like": self.like_track,
-            "dislike": self.dislike_track,
-            "switch_playlist": self.switch_playlist
+            "add_favorite": self.add_to_favorites
         }
 
         if command in command_map:
@@ -192,68 +192,6 @@ class SpotifyController:
             logger.error(f"Failed to add track to favorites: {str(e)}")
             raise
 
-    # same as above
-    def like_track(self):
-        self.add_to_favorites()
-
-    # rem from liked songs
-    def dislike_track(self):
-        try:
-            current_track = self.sp.current_user_playing_track()
-            if not current_track:
-                logger.warning("No track currently playing")
-                return
-
-            track_id = current_track['item']['id']
-            track_name = current_track['item']['name']
-            artist_name = current_track['item']['artists'][0]['name']
-
-            self.sp.current_user_saved_tracks_delete([track_id])
-            logger.info(
-                f"Removed '{track_name}' by {artist_name} from your Liked Songs")
-        except Exception as e:
-            logger.error(f"Failed to dislike track: {str(e)}")
-            raise
-
-    # swithc to next avail. playlist
-    def switch_playlist(self):
-        try:
-            # get playlists
-            playlists = self.sp.current_user_playlists()
-            if not playlists or playlists['total'] == 0:
-                logger.warning("No playlists found")
-                return
-
-            current_playback = self.sp.current_playback()
-            if not current_playback or 'context' not in current_playback or not current_playback['context']:
-                # if nothing is playing or context is missing, play the first playlist
-                first_playlist = playlists['items'][0]
-                self.sp.start_playback(context_uri=first_playlist['uri'])
-                logger.info(
-                    f"Started playback of playlist: {first_playlist['name']}")
-                return
-
-            # find current playlist in user's playlists
-            current_context_uri = current_playback['context']['uri']
-            playlist_uris = [p['uri'] for p in playlists['items']]
-
-            if current_context_uri in playlist_uris:
-                current_index = playlist_uris.index(current_context_uri)
-                next_index = (current_index + 1) % len(playlist_uris)
-                next_playlist = playlists['items'][next_index]
-
-                self.sp.start_playback(context_uri=next_playlist['uri'])
-                logger.info(f"Switched to playlist: {next_playlist['name']}")
-            else:
-                # context not found, start first playlist
-                first_playlist = playlists['items'][0]
-                self.sp.start_playback(context_uri=first_playlist['uri'])
-                logger.info(
-                    f"Started playback of playlist: {first_playlist['name']}")
-        except Exception as e:
-            logger.error(f"Failed to switch playlist: {str(e)}")
-            raise
-
     # current song stats
     def get_current_track_info(self):
         try:
@@ -274,9 +212,11 @@ class SpotifyController:
 if __name__ == "__main__":
     import sys
 
+    valid_commands = list(set(SPOTIFY_COMMANDS.values()))
+
     if len(sys.argv) != 2:
         print("Usage: python spotify_controller.py <command>")
-        print("Available commands: play, pause, next, previous, volume_up, volume_down, toggle_shuffle, add_favorite, like, dislike, switch_playlist")
+        print(f"Available commands: {', '.join(valid_commands)}")
         sys.exit(1)
 
     command = sys.argv[1]

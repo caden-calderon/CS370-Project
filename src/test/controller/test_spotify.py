@@ -20,43 +20,17 @@ sys.path.insert(0, project_root)
 
 try:
     from src.controller.spotify_controller import SpotifyController
-    print("Successfully imported SpotifyController")
+    from src.constants.constants import (
+        GESTURE_LIST,
+        SPOTIFY_COMMANDS,
+        GESTURE_TO_INDEX,
+        COMMAND_DESCRIPTIONS,
+        ControllerType
+    )
+    print("Successfully imported SpotifyController & constants")
 except ImportError as e:
     print("Unexpected ImportError")
     sys.exit(1)
-
-# Spotify command mapping
-spotify_commands = {
-    0: "play",
-    1: "pause",
-    2: "next",
-    3: "previous",
-    4: "volume_up",
-    5: "volume_down",
-    6: "toggle_shuffle",
-    7: "add_favorite",
-    8: "like",
-    9: "dislike",
-    10: "switch_playlist"
-}
-
-spotify_gesture_labels = [
-    "open_palm",    # play
-    "closed_fist",  # pause
-    "swipe_right",  # next track
-    "swipe_left",   # previous track
-    "swipe_up",     # volume up
-    "swipe_down",   # volume down
-    "circular",     # toggle shuffle
-    "two_fingers",  # add to favorites
-    "thumbs_up",    # like
-    "thumbs_down",  # dislike
-    "peace_sign",   # switch playlist
-]
-
-# Create a reverse mapping from gesture name to index
-gesture_name_to_index = {name: idx for idx,
-                         name in enumerate(spotify_gesture_labels)}
 
 
 def print_available_commands():
@@ -64,9 +38,18 @@ def print_available_commands():
     print("Format: [INDEX] GESTURE_NAME - COMMAND")
     print("-" * 50)
 
-    for idx, label in enumerate(spotify_gesture_labels):
-        command = spotify_commands[idx]
-        print(f"[{idx}] {label} - {command}")
+    for idx, gesture in enumerate(GESTURE_LIST):
+        # inedx 6 and 7 are reserved for controller switching
+        if idx in [6, 7]:
+            print(f"[{idx}] {gesture} - Reserved for controller switching")
+            continue
+
+        if idx in SPOTIFY_COMMANDS:
+            command = SPOTIFY_COMMANDS[idx]
+            description = COMMAND_DESCRIPTIONS.get(command, "")
+            print(f"[{idx}] {gesture} - {command} - {description}")
+        else:
+            print(f"[{idx}] {gesture} - No command assigned")
 
     print("-" * 50)
     print("Enter command index, gesture name, or command name")
@@ -94,26 +77,29 @@ def process_command(spotify, command_input):
         # Check if input is a number (index)
         if command_input.isdigit():
             idx = int(command_input)
-            if idx < 0 or idx >= len(spotify_commands):
-                print(
-                    f"Error: Index {idx} out of range (0-{len(spotify_commands)-1})")
+            if idx not in SPOTIFY_COMMANDS:
+                print(f"Error: Index {idx} is not a valid Spotify command")
                 return
-            command = spotify_commands[idx]
-            gesture = spotify_gesture_labels[idx]
+            command = SPOTIFY_COMMANDS[idx]
+            gesture = GESTURE_LIST[idx]
 
         # Check if input is a gesture name
-        elif command_input in gesture_name_to_index:
-            idx = gesture_name_to_index[command_input]
-            command = spotify_commands[idx]
+        elif command_input in GESTURE_TO_INDEX:
+            idx = GESTURE_TO_INDEX[command_input]
+            if idx not in SPOTIFY_COMMANDS:
+                print(
+                    f"Error: Gesture '{command_input}' is not mapped to a Spotify command")
+                return
+            command = SPOTIFY_COMMANDS[idx]
             gesture = command_input
 
         # Check if input is a direct command name
-        elif command_input in spotify_commands.values():
+        elif command_input in SPOTIFY_COMMANDS.values():
             command = command_input
             # Find the index of this command
-            idx = next((i for i, cmd in spotify_commands.items()
+            idx = next((i for i, cmd in SPOTIFY_COMMANDS.items()
                        if cmd == command), None)
-            gesture = spotify_gesture_labels[idx] if idx is not None else "Unknown"
+            gesture = GESTURE_LIST[idx] if idx is not None else "Unknown"
 
         else:
             print(f"Error: Unknown command '{command_input}'")
