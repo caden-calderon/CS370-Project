@@ -32,6 +32,10 @@ Add token to `.env`
 
 ## Supported Gestures
 
+### Reserved Controls
+- 1 finger - Toggle Spotify Controls
+- 2 fingers - Toggle LIFX Controls
+
 ### Spotify Controls
 
 - Open palm → Play
@@ -40,15 +44,18 @@ Add token to `.env`
 - Swipe left → Previous track
 - Swipe up → Volume up
 - Swipe down → Volume down
-- TODO: Define hand gesture number 1-4 mappings
+- 3 fingers → Toggle shuffle
+- 4 fingers → Add to favorites
 
 ### LIFX Controls
 
-- Open palm (hold) → Lights on
-- Closed fist (hold) → Lights off
-- Swipe up (hold) → Brightness up
-- Swipe down (hold) → Brightness down
-- TODO: Define hand gesture number 1-4 mappings
+- Open palm → Lights on
+- Closed fist → Lights off
+- Swipe right → Toggle light
+- Swipe up → Brightness up
+- Swipe down → Brightness down
+- 3 fingers → Set Color Red
+- 4 fingers → Set Color Blue
 
 ## Project Structure
 
